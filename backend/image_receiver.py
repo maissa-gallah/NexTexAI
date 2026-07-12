@@ -16,10 +16,6 @@ def on_message(client, userdata, msg):
     global OUTPUT_COUNTER
     OUTPUT_COUNTER += 1
     filename = f"received_image_{OUTPUT_COUNTER}.jpg"
-    
-    # CRITICAL: Write payload as bytes ('wb')
-    # with open(filename, 'wb') as f:
-    #     f.write(msg.payload)
         
     print(f"[RECEIVED] Saved image as {filename}")
 

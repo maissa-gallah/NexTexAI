@@ -8,8 +8,8 @@ load_dotenv()
 BROKER_HOST = os.getenv("BROKER_HOST", "localhost")
 BROKER_PORT = int(os.getenv("BROKER_PORT", "1883"))
 TOPIC = os.getenv("TOPIC", "simulation/images")
-IMAGE_FOLDER = os.getenv("IMAGE_FOLDER", "./Dataset/Broken stitch")
-DELAY_SECONDS = float(os.getenv("DELAY_SECONDS", "2.0"))
+IMAGE_FOLDER = os.getenv("IMAGE_FOLDER", "../Dataset/Broken stitch")
+DELAY_SECONDS = float(os.getenv("DELAY_SECONDS", "1"))
 
 def stream_images():
     client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
@@ -28,7 +28,6 @@ def stream_images():
         client.loop_stop()
         return
 
-    # Filter for common image extensions
     valid_extensions = ('.jpg', '.jpeg', '.png', '.bmp')
     files = sorted([
         f for f in os.listdir(IMAGE_FOLDER) 
@@ -46,7 +45,6 @@ def stream_images():
         for file_name in files:
             file_path = os.path.join(IMAGE_FOLDER, file_name)
             
-            # CRITICAL: Read file as bytes ('rb')
             with open(file_path, 'rb') as f:
                 image_bytes = f.read()
             
