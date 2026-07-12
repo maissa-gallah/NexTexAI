@@ -1,21 +1,43 @@
 import os
+import json
 import random
 import asyncio
 from dotenv import load_dotenv
 import paho.mqtt.client as mqtt
+import pika
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-import threading
+
 load_dotenv()
 
+# --- Configurations ---
 BROKER_HOST = os.getenv("BROKER_HOST", "localhost")
 BROKER_PORT = int(os.getenv("BROKER_PORT", "1883"))
-TOPIC = os.getenv("TOPIC", "simulation/images")
+MQTT_TOPIC = os.getenv("TOPIC", "simulation/images")
+
+RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
+QUEUE_NAME = "image_processing_queue"
+ALERT_EXCHANGE = "anomaly_alerts"
+
+CONFIDENCE_THRESHOLD = 0.90
+
+# --- State Tracking & Async Streaming Queues ---
+SEEN_CLASSES = set(["defect free"])
+latest_prediction = None
+image_counter = 0
+
+# Local queue to feed the MJPEG endpoint safely across frames
+video_stream_queue = asyncio.Queue(maxsize=10)
+_main_loop = None 
+
+DEFECT_CLASSES = [
+    "Broken stitch", "defect free", "hole", "horizontal",
+    "lines", "Needle mark", "Pinched fabric", "stain", "Vertical"
+]
 
 app = FastAPI()
 
-# Enable CORS for React
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -24,116 +46,151 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# --- Simulated defect classes (matching Dataset folder names) ---
-DEFECT_CLASSES = [
-    "Broken stitch", "defect free", "hole", "horizontal",
-    "lines", "Needle mark", "Pinched fabric", "stain", "Vertical"
-]
+# --- Business & Alert Logic ---
 
 def simulate_prediction() -> dict:
-    """Simulate a model prediction – returns a random defect class and confidence."""
     defect_class = random.choice(DEFECT_CLASSES)
-    # Simulate a confidence threshold between 0.75 and 0.99
     confidence = round(random.uniform(0.75, 0.99), 3)
     return {"class": defect_class, "confidence": confidence}
 
+def evaluate_and_alert_rabbitmq(prediction: dict):
+    try:
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
+        channel = connection.channel()
+        channel.exchange_declare(exchange=ALERT_EXCHANGE, exchange_type='topic')
+        
+        pred_class = prediction["class"]
+        confidence = prediction["confidence"]
 
-async_image_queue = asyncio.Queue(maxsize=10)
-latest_image = None
-latest_prediction = None
-image_counter = 0
-_main_loop = None 
+        if pred_class not in SEEN_CLASSES:
+            SEEN_CLASSES.add(pred_class)
+            alert_payload = {"event_type": "new_anomaly_class", "details": prediction}
+            channel.basic_publish(
+                exchange=ALERT_EXCHANGE,
+                routing_key="anomaly.new_class",
+                body=json.dumps(alert_payload)
+            )
+            print(f" [RMQ ALERT] New Anomaly Class: {pred_class}")
+
+        if pred_class != "defect free" and confidence > CONFIDENCE_THRESHOLD:
+            alert_payload = {"event_type": "threshold_exceeded", "details": prediction}
+            channel.basic_publish(
+                exchange=ALERT_EXCHANGE,
+                routing_key="anomaly.threshold_exceeded",
+                body=json.dumps(alert_payload)
+            )
+            print(f" [RMQ ALERT] Threshold Exceeded! {pred_class} ({confidence:.1%})")
+
+        connection.close()
+    except Exception as e:
+        print(f"Failed to publish alert event to RabbitMQ: {e}")
+
+# --- MQTT Handlers ---
 
 def on_connect(client, userdata, flags, reason_code, properties):
-    print(f"Connected to MQTT. Subscribing to '{TOPIC}'...")
-    client.subscribe(TOPIC)
+    print(f"Connected to MQTT Broker. Subscribing to '{MQTT_TOPIC}'...")
+    client.subscribe(MQTT_TOPIC)
 
 def on_message(client, userdata, msg):
-    global latest_image, latest_prediction, image_counter
+    global image_counter, latest_prediction, _main_loop
     image_counter += 1
-
-    # Simulate model prediction
+    
     prediction = simulate_prediction()
     latest_prediction = prediction
-
-    # Push image bytes together with metadata through the queue
+    print(f"[MQTT RECEIVED] Frame #{image_counter} | Predicted: {prediction['class']}")
+    
+    # 1. Thread-safe handoff to the local UI video streaming queue
     if _main_loop is not None and _main_loop.is_running():
-        if async_image_queue.full():
+        if video_stream_queue.full():
             try:
-                async_image_queue.get_nowait()
+                video_stream_queue.get_nowait() # Drop oldest if UI falls behind
             except asyncio.QueueEmpty:
                 pass
-
+        
+        # Package frame along with metadata
         frame_data = (msg.payload, image_counter, prediction)
         asyncio.run_coroutine_threadsafe(
-            async_image_queue.put(frame_data), _main_loop
+            video_stream_queue.put(frame_data), _main_loop
         )
+    
+    # 2. Forward raw payload to RabbitMQ queue for background tasks
+    try:
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
+        channel = connection.channel()
+        channel.queue_declare(queue=QUEUE_NAME, durable=True)
+        channel.basic_publish(
+            exchange='',
+            routing_key=QUEUE_NAME,
+            body=msg.payload,
+            properties=pika.BasicProperties(delivery_mode=2)
+        )
+        connection.close()
+    except Exception as e:
+        print(f"Error buffering raw image into RabbitMQ: {e}")
 
-    latest_image = msg.payload
-    print(f"[RECEIVED] Image #{image_counter} | {prediction['class']} ({prediction['confidence']:.1%})")
+    # 3. Handle Alert Rules
+    evaluate_and_alert_rabbitmq(prediction)
 
-# Setup MQTT in a background thread
-def mqtt_loop():
-    receiver = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
-    receiver.on_connect = on_connect
-    receiver.on_message = on_message
-    receiver.connect(BROKER_HOST, BROKER_PORT, 60)
-    receiver.loop_forever()
+# --- Background Task Management ---
 
-# Start MQTT listener in background
-mqtt_thread = threading.Thread(target=mqtt_loop, daemon=True)
-mqtt_thread.start()
+@app.on_event("startup")
+async def startup_event():
+    global _main_loop
+    # Grab the running FastAPI event loop so the MQTT thread can talk to it safely
+    _main_loop = asyncio.get_running_loop()
+
+    mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
+    mqtt_client.on_connect = on_connect
+    mqtt_client.on_message = on_message
+    
+    mqtt_client.connect(BROKER_HOST, BROKER_PORT, 60)
+    mqtt_client.loop_start()
+    app.state.mqtt_client = mqtt_client
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    app.state.mqtt_client.loop_stop()
+    app.state.mqtt_client.disconnect()
+
+# --- Async Stream Generators ---
 
 async def generate_mjpeg():
+    """Generates the multipart MJPEG stream containing image parts and metadata parts."""
     while True:
         try:
-            img_bytes, counter, pred = await async_image_queue.get()
-            # Metadata part
+            img_bytes, counter, pred = await video_stream_queue.get()
+            
+            # 1. Metadata Boundary Part
             metadata = f'{{"counter":{counter},"class":"{pred["class"]}","confidence":{pred["confidence"]}}}'
             yield (b'--frame\r\n'
                    b'Content-Type: application/json\r\n\r\n' +
                    metadata.encode() + b'\r\n')
-            # Image part
+            
+            # 2. Image Boundary Part
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + img_bytes + b'\r\n')
         except Exception as e:
             print(f"Error in MJPEG stream: {e}")
             await asyncio.sleep(0.1)
 
+# --- API Endpoints ---
+
 @app.get("/video_feed")
 async def video_feed():
+    """Serves a real-time MJPEG live stream readable directly by an HTML <img> tag."""
     return StreamingResponse(
         generate_mjpeg(),
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
 
-@app.get("/latest_image")
-async def get_latest_image():
-    if latest_image:
-        return Response(content=latest_image, media_type="image/jpeg")
-    return {"error": "No image available"}
-
 @app.get("/status")
 async def status():
-    print(f"Status requested: {image_counter} images received.")
     return {
-        "status": "running",
-        "images_received": image_counter,
-        "queue_size": async_image_queue.qsize(),
-        "latest_prediction": latest_prediction if latest_prediction else None
+        "status": "healthy",
+        "images_ingested": image_counter,
+        "latest_prediction": latest_prediction,
+        "tracked_anomaly_classes": list(SEEN_CLASSES)
     }
-
-@app.get("/health")
-async def health():
-    return {
-        "status": "running"
-    }
-
-@app.on_event("startup")
-async def _capture_event_loop():
-    global _main_loop
-    _main_loop = asyncio.get_running_loop()
 
 if __name__ == "__main__":
     import uvicorn

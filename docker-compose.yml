@@ -13,3 +13,12 @@ services:
         echo "allow_anonymous true" >> /mosquitto/config/mosquitto.conf
         exec mosquitto -c /mosquitto/config/mosquitto.conf
     restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"        # RabbitMQ message broker port
+      - "15672:15672"      # RabbitMQ Management Web UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
