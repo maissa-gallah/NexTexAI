@@ -5,7 +5,7 @@ import asyncio
 from dotenv import load_dotenv
 import paho.mqtt.client as mqtt
 import pika
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -36,6 +36,28 @@ DEFECT_CLASSES = [
     "lines", "Needle mark", "Pinched fabric", "stain", "Vertical"
 ]
 
+# Track active WebSocket connections from your UI layout
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list = []
+
+    async def connect(self, websocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: dict):
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except Exception:
+                # Handle stale/closed client channels gracefully
+                self.active_connections.remove(connection)
+
+manager = ConnectionManager()
+
 app = FastAPI()
 
 app.add_middleware(
@@ -53,7 +75,7 @@ def simulate_prediction() -> dict:
     confidence = round(random.uniform(0.75, 0.99), 3)
     return {"class": defect_class, "confidence": confidence}
 
-def evaluate_and_alert_rabbitmq(prediction: dict):
+def evaluate_and_alert_rabbitmq(prediction: dict, frame_number: int):
     try:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
         channel = connection.channel()
@@ -62,28 +84,26 @@ def evaluate_and_alert_rabbitmq(prediction: dict):
         pred_class = prediction["class"]
         confidence = prediction["confidence"]
 
-        if pred_class not in SEEN_CLASSES:
-            SEEN_CLASSES.add(pred_class)
-            alert_payload = {"event_type": "new_anomaly_class", "details": prediction}
-            channel.basic_publish(
-                exchange=ALERT_EXCHANGE,
-                routing_key="anomaly.new_class",
-                body=json.dumps(alert_payload)
-            )
-            print(f" [RMQ ALERT] New Anomaly Class: {pred_class}")
-
+        # --- EVENT 2: Threshold exceeded ---
         if pred_class != "defect free" and confidence > CONFIDENCE_THRESHOLD:
-            alert_payload = {"event_type": "threshold_exceeded", "details": prediction}
+            alert_payload = {"event_type": "threshold_exceeded", "details": prediction, "frame": frame_number}
+            
+            # 1. Send to RabbitMQ for backend worker/database archiving
             channel.basic_publish(
                 exchange=ALERT_EXCHANGE,
                 routing_key="anomaly.threshold_exceeded",
                 body=json.dumps(alert_payload)
             )
-            print(f" [RMQ ALERT] Threshold Exceeded! {pred_class} ({confidence:.1%})")
+            
+            # 2. Push to the connected React UIs using the main event loop
+            if _main_loop is not None and _main_loop.is_running():
+                asyncio.run_coroutine_threadsafe(
+                    manager.broadcast(alert_payload), _main_loop
+                )
 
         connection.close()
     except Exception as e:
-        print(f"Failed to publish alert event to RabbitMQ: {e}")
+        print(f"Failed to handle alert routing: {e}")
 
 # --- MQTT Handlers ---
 
@@ -129,7 +149,7 @@ def on_message(client, userdata, msg):
         print(f"Error buffering raw image into RabbitMQ: {e}")
 
     # 3. Handle Alert Rules
-    evaluate_and_alert_rabbitmq(prediction)
+    evaluate_and_alert_rabbitmq(prediction, image_counter)
 
 # --- Background Task Management ---
 
@@ -182,6 +202,16 @@ async def video_feed():
         generate_mjpeg(),
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
+
+@app.websocket("/ws/alerts")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            # Keep the connection alive, waiting for client lifecycle events
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
 @app.get("/status")
 async def status():

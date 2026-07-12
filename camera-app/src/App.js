@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
+import DashboardAlerts from './DashboardAlerts';
 
 // ─── Multipart stream parser helpers ───────────────────────────────────────
 
@@ -333,6 +334,8 @@ const App = () => {
             )}
           </div>
         </div>
+        <h1> hello </h1>
+        <DashboardAlerts />
 
         {showUrlInput && (
           <div className="settings-panel">
