@@ -1,16 +1,12 @@
 import os
-import io
+import random
 import asyncio
-from datetime import datetime
 from dotenv import load_dotenv
 import paho.mqtt.client as mqtt
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 import threading
-import queue
-from PIL import Image
-
 load_dotenv()
 
 BROKER_HOST = os.getenv("BROKER_HOST", "localhost")
@@ -29,8 +25,23 @@ app.add_middleware(
 )
 
 
+# --- Simulated defect classes (matching Dataset folder names) ---
+DEFECT_CLASSES = [
+    "Broken stitch", "defect free", "hole", "horizontal",
+    "lines", "Needle mark", "Pinched fabric", "stain", "Vertical"
+]
+
+def simulate_prediction() -> dict:
+    """Simulate a model prediction – returns a random defect class and confidence."""
+    defect_class = random.choice(DEFECT_CLASSES)
+    # Simulate a confidence threshold between 0.75 and 0.99
+    confidence = round(random.uniform(0.75, 0.99), 3)
+    return {"class": defect_class, "confidence": confidence}
+
+
 async_image_queue = asyncio.Queue(maxsize=10)
 latest_image = None
+latest_prediction = None
 image_counter = 0
 _main_loop = None 
 
@@ -39,22 +50,28 @@ def on_connect(client, userdata, flags, reason_code, properties):
     client.subscribe(TOPIC)
 
 def on_message(client, userdata, msg):
-    global latest_image, image_counter
+    global latest_image, latest_prediction, image_counter
     image_counter += 1
 
+    # Simulate model prediction
+    prediction = simulate_prediction()
+    latest_prediction = prediction
+
+    # Push image bytes together with metadata through the queue
     if _main_loop is not None and _main_loop.is_running():
         if async_image_queue.full():
             try:
                 async_image_queue.get_nowait()
             except asyncio.QueueEmpty:
                 pass
-                
+
+        frame_data = (msg.payload, image_counter, prediction)
         asyncio.run_coroutine_threadsafe(
-            async_image_queue.put(msg.payload), _main_loop
+            async_image_queue.put(frame_data), _main_loop
         )
 
     latest_image = msg.payload
-    print(f"[RECEIVED] Image #{image_counter} ({len(msg.payload)} bytes)")
+    print(f"[RECEIVED] Image #{image_counter} | {prediction['class']} ({prediction['confidence']:.1%})")
 
 # Setup MQTT in a background thread
 def mqtt_loop():
@@ -71,7 +88,13 @@ mqtt_thread.start()
 async def generate_mjpeg():
     while True:
         try:
-            img_bytes = await async_image_queue.get()
+            img_bytes, counter, pred = await async_image_queue.get()
+            # Metadata part
+            metadata = f'{{"counter":{counter},"class":"{pred["class"]}","confidence":{pred["confidence"]}}}'
+            yield (b'--frame\r\n'
+                   b'Content-Type: application/json\r\n\r\n' +
+                   metadata.encode() + b'\r\n')
+            # Image part
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + img_bytes + b'\r\n')
         except Exception as e:
@@ -97,7 +120,8 @@ async def status():
     return {
         "status": "running",
         "images_received": image_counter,
-        "queue_size": async_image_queue.qsize()
+        "queue_size": async_image_queue.qsize(),
+        "latest_prediction": latest_prediction if latest_prediction else None
     }
 
 @app.get("/health")
