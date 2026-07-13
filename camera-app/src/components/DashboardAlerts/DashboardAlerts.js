@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaExclamationTriangle, FaChevronDown } from 'react-icons/fa';
+import { ALERTS_WS_URL } from '../../utils/constants';
 import './DashboardAlerts.css';
 
 export default function DashboardAlerts() {
@@ -7,7 +8,7 @@ export default function DashboardAlerts() {
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8000/ws/alerts');
+    const ws = new WebSocket(ALERTS_WS_URL);
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
