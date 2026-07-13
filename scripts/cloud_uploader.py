@@ -1,8 +1,13 @@
 """
 Cloud Uploader Worker
 ----------------------
-Listens to RabbitMQ for frames from newly detected anomaly classes
-and uploads them to MinIO (S3-compatible local storage) for retraining.
+Listens to RabbitMQ for anomaly frame messages and uploads them
+to MinIO (S3-compatible local storage) for retraining datasets.
+
+Requires a running RabbitMQ broker and MinIO server.
+
+Usage:
+    python cloud_uploader.py
 """
 import os
 import json
@@ -15,7 +20,7 @@ load_dotenv()
 
 # --- Configuration ---
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "localhost")
-CLOUD_UPLOAD_QUEUE = "cloud_upload_queue"
+CLOUD_UPLOAD_QUEUE = os.getenv("CLOUD_UPLOAD_QUEUE", "cloud_upload_queue")
 
 MINIO_ENDPOINT = os.getenv("CLOUD_ENDPOINT", "localhost:9000")
 MINIO_ACCESS_KEY = os.getenv("CLOUD_ACCESS_KEY", "minioadmin")
@@ -49,12 +54,12 @@ def ensure_bucket(s3_client):
 def upload_frame(image_bytes: bytes, class_name: str, frame_number: int, confidence: float):
     """
     Upload a single frame to MinIO organized by anomaly class.
+
     Path: retraining-data/<class_name>/frame_<frame_number>.jpg
     """
     s3 = get_s3_client()
     ensure_bucket(s3)
 
-    # Sanitize class name for use in S3 key paths
     safe_class = class_name.replace(" ", "_").replace("/", "-")
     key = f"retraining/{safe_class}/frame_{frame_number:06d}.jpg"
 
@@ -89,24 +94,18 @@ def on_message(ch, method, properties, body):
         print(f" [WORKER] Frame #{frame_number} uploaded successfully.")
     except Exception as e:
         print(f" [WORKER ERROR] Failed to upload frame #{frame_number}: {e}")
-        # Reject and requeue for retry
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
 
 def main():
     """Start the Cloud Uploader worker."""
-    print(" [*] Cloud Uploader Worker starting...")
+    print(" [*] Cloud Uploader Worker starting ...")
 
-    # Connect to RabbitMQ
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
     channel = connection.channel()
 
-    # Ensure the queue exists (durable to survive broker restarts)
     channel.queue_declare(queue=CLOUD_UPLOAD_QUEUE, durable=True)
-
-    # Only fetch one message at a time per worker
     channel.basic_qos(prefetch_count=1)
-
     channel.basic_consume(queue=CLOUD_UPLOAD_QUEUE, on_message_callback=on_message)
 
     print(f" [*] Waiting for messages on '{CLOUD_UPLOAD_QUEUE}'. To exit press CTRL+C")

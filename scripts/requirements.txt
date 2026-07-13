@@ -1,0 +1,4 @@
+python-dotenv==1.0.0
+paho-mqtt>=2.0.0
+pika==1.4.1
+boto3>=1.28.0
