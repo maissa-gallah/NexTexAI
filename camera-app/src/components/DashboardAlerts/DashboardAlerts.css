@@ -95,6 +95,17 @@
   color: #ff6b6b;
 }
 
+.alerts-toggle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+  user-select: none;
+}
+
+.alerts-toggle.collapsed {
+  transform: rotate(-90deg);
+}
+
 @keyframes alertSlideIn {
   from {
     opacity: 0;

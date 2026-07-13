@@ -3,6 +3,7 @@ import './DashboardAlerts.css';
 
 export default function DashboardAlerts() {
   const [alerts, setAlerts] = useState([]);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8000/ws/alerts');
@@ -22,11 +23,15 @@ export default function DashboardAlerts() {
 
   return (
     <div className="alerts-panel">
-      <div className="alerts-header">
+      <div className="alerts-header" onClick={() => setCollapsed(!collapsed)} style={{ cursor: 'pointer' }}>
         <h3>⚠️ System Alerts</h3>
-        <span className="alerts-count">{alerts.length}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="alerts-count">{alerts.length}</span>
+          <span className={`alerts-toggle ${collapsed ? 'collapsed' : ''}`}>▼</span>
+        </div>
       </div>
-      <div className="alerts-list">
+      {!collapsed && (
+        <div className="alerts-list">
         {alerts.map((alert, index) => (
           <div key={index} className="alert-card">
             <div className="alert-header">
@@ -52,6 +57,7 @@ export default function DashboardAlerts() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

@@ -145,6 +145,17 @@
   color: var(--text-secondary);
 }
 
+.cloud-status-toggle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+  user-select: none;
+}
+
+.cloud-status-toggle.collapsed {
+  transform: rotate(-90deg);
+}
+
 .cloud-status-error {
   margin-top: 12px;
   padding: 10px 14px;

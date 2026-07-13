@@ -6,6 +6,7 @@ export default function CloudStatus() {
   const [metrics, setMetrics] = useState(null);
   const [health, setHealth] = useState(null);
   const [error, setError] = useState(null);
+  const [collapsed, setCollapsed] = useState(false);
 
   const fetchMetrics = useCallback(async () => {
     try {
@@ -66,14 +67,17 @@ export default function CloudStatus() {
 
   return (
     <div className="cloud-status-panel">
-      <div className="cloud-status-header">
+      <div className="cloud-status-header" onClick={() => setCollapsed(!collapsed)} style={{ cursor: 'pointer' }}>
         <h3>☁️ Cloud & System Health</h3>
-        <span className={`cloud-status-badge ${overallHealth}`}>
-          {overallHealth === 'healthy' ? '🟢 Healthy' : overallHealth === 'degraded' ? '🟡 Degraded' : '🔴 Error'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className={`cloud-status-badge ${overallHealth}`}>
+            {overallHealth === 'healthy' ? '🟢 Healthy' : overallHealth === 'degraded' ? '🟡 Degraded' : '🔴 Error'}
+          </span>
+          <span className={`cloud-status-toggle ${collapsed ? 'collapsed' : ''}`}>▼</span>
+        </div>
       </div>
 
-      <div className="cloud-status-body">
+      {!collapsed && <div className="cloud-status-body">
         {/* ── Uptime & Frames ── */}
         <div className="cloud-status-section-title">System</div>
         <div className="cloud-status-section">
@@ -179,7 +183,7 @@ export default function CloudStatus() {
             ⚠️ {error}
           </div>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
