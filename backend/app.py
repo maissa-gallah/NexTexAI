@@ -16,6 +16,7 @@ from models import Prediction, FrameData
 from services.mqtt_handler import MqttHandler
 from services.alert_engine import AlertEngine
 from services.stream_service import stream_service
+from services.metrics import metrics
 from routers.video import router as video_router
 from routers.alerts import router as alerts_router
 from routers.status import router as status_router, set_status
@@ -57,6 +58,13 @@ def _on_frame_received(frame_data: FrameData) -> None:
     global image_counter, latest_prediction
     image_counter = frame_data.frame_number
     latest_prediction = frame_data.prediction
+
+    # Record base frame metrics
+    metrics.record_frame(frame_data.frame_number)
+    metrics.record_prediction(
+        frame_data.prediction.class_name, frame_data.prediction.confidence
+    )
+    metrics.stream_queue_backlog = stream_service.queue_size
 
     # 1. Push frame into the MJPEG streaming queue
     stream_service.push(frame_data)

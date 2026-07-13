@@ -48,6 +48,25 @@ class StreamService:
         await self._queue.put(frame_data)
 
     # ------------------------------------------------------------------
+    # Queue introspection (for metrics / health checks)
+    # ------------------------------------------------------------------
+
+    @property
+    def queue_size(self) -> int:
+        """Return the current number of frames waiting in the stream queue."""
+        try:
+            # asyncio.Queue doesn't expose a public *size* reliably from
+            # outside the event-loop thread, but for metrics polling from
+            # the same loop this is safe.
+            return self._queue.qsize()
+        except NotImplementedError:
+            return -1
+
+    @property
+    def queue_maxsize(self) -> int:
+        return self._queue.maxsize
+
+    # ------------------------------------------------------------------
     # Consumer (async generator for StreamingResponse)
     # ------------------------------------------------------------------
 

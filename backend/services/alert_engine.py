@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 from config import config
 from models import Prediction, AlertPayload, FrameData
 from connection_manager import manager
+from services.metrics import metrics
 
 
 class AlertEngine:
@@ -82,6 +83,11 @@ class AlertEngine:
         )
         print(f"[ALERT] New Anomaly Class: {prediction.class_name}")
 
+        # Track metrics
+        metrics.record_event("new_anomaly_class")
+        metrics.record_new_class()
+        metrics.record_cloud_upload()
+
         # Enqueue the frame image for cloud upload (retraining pipeline)
         self._enqueue_cloud_upload(channel, frame_data)
 
@@ -99,6 +105,10 @@ class AlertEngine:
         )
         payload_dict = payload.to_dict()
 
+        # Track metrics
+        metrics.record_event("threshold_exceeded")
+        metrics.record_threshold_breach()
+
         # 1. RabbitMQ for backend workers / database archiving
         channel.basic_publish(
             exchange=config.alert_exchange,
@@ -111,6 +121,7 @@ class AlertEngine:
             asyncio.run_coroutine_threadsafe(
                 manager.broadcast(payload_dict), self._loop
             )
+            metrics.record_websocket_broadcast()
 
         print(
             f"[ALERT] Threshold exceeded — {prediction.class_name} "
