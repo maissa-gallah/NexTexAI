@@ -16,8 +16,7 @@ export const STREAM_BOUNDARIES = {
   HEADER_END: new TextEncoder().encode('\r\n\r\n'),
 };
 
-export const DEFAULT_STREAM_URL = 'http://localhost:8000/video_feed';
-
-export const STATUS_API_URL = 'http://localhost:8000/status';
-export const METRICS_API_URL = 'http://localhost:8000/metrics';
-export const ALERTS_WS_URL = 'ws://localhost:8000/ws/alerts';
+export const DEFAULT_STREAM_URL = process.env.REACT_APP_STREAM_URL || 'http://localhost:8000/video_feed';
+export const STATUS_API_URL = process.env.REACT_APP_STATUS_URL || 'http://localhost:8000/status';
+export const METRICS_API_URL = process.env.REACT_APP_METRICS_URL || 'http://localhost:8000/metrics';
+export const ALERTS_WS_URL = process.env.REACT_APP_ALERTS_WS_URL || 'ws://localhost:8000/ws/alerts';
