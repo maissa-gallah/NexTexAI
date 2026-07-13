@@ -1,0 +1,58 @@
+/* --- Prediction overlay on the feed image --- */
+.prediction-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+  border-left: 4px solid var(--primary);
+  overflow: hidden;
+  min-width: 180px;
+  z-index: 5;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.prediction-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  gap: 12px;
+}
+
+.prediction-class {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  text-transform: capitalize;
+}
+
+.prediction-confidence {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.prediction-bar-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.prediction-bar-fill {
+  height: 100%;
+  border-radius: 0 2px 2px 0;
+  transition: width 0.3s ease;
+}
+
+.prediction-counter {
+  padding: 6px 14px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Courier New', monospace;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}

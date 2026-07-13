@@ -1,0 +1,133 @@
+.feed-container {
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border-color);
+  min-height: 480px;
+  max-height: 80vh;
+}
+
+.feed-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+.paused-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10;
+}
+
+.pause-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.paused-overlay h2 {
+  font-size: 28px;
+  color: var(--text-secondary);
+}
+
+.paused-overlay p {
+  color: #4a4a6a;
+  margin-top: 8px;
+}
+
+/* --- Loading overlay --- */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  color: var(--text-secondary);
+  z-index: 10;
+  gap: 16px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.08);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.frame-info {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  backdrop-filter: blur(10px);
+  font-family: 'Courier New', monospace;
+}
+
+.quality-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.quality-badge.good {
+  background: rgba(76, 175, 80, 0.3);
+  color: #81c784;
+}
+
+.quality-badge.medium {
+  background: rgba(255, 193, 7, 0.3);
+  color: #ffd54f;
+}
+
+.quality-badge.poor {
+  background: rgba(244, 67, 54, 0.3);
+  color: #ef5350;
+}
+
+@media (max-width: 768px) {
+  .feed-container {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .frame-info {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  .quality-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+}

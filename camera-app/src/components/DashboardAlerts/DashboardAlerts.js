@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './DashboardAlerts.css';
 
 export default function DashboardAlerts() {
   const [alerts, setAlerts] = useState([]);

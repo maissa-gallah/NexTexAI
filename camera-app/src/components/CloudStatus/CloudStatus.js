@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { STATUS_API_URL, METRICS_API_URL } from '../../utils/constants';
+import './CloudStatus.css';
 
 export default function CloudStatus() {
   const [metrics, setMetrics] = useState(null);
@@ -8,8 +10,8 @@ export default function CloudStatus() {
   const fetchMetrics = useCallback(async () => {
     try {
       const [metricsRes, healthRes] = await Promise.all([
-        fetch('http://localhost:8000/metrics'),
-        fetch('http://localhost:8000/status'),
+        fetch(METRICS_API_URL),
+        fetch(STATUS_API_URL),
       ]);
       if (metricsRes.ok && healthRes.ok) {
         setMetrics(await metricsRes.json());
@@ -73,6 +75,7 @@ export default function CloudStatus() {
 
       <div className="cloud-status-body">
         {/* ── Uptime & Frames ── */}
+        <div className="cloud-status-section-title">System</div>
         <div className="cloud-status-section">
           <div className="cloud-status-item">
             <span className="cloud-status-label">Uptime</span>
