@@ -85,7 +85,7 @@ class AlertEngine:
 
         # Track metrics
         metrics.record_event("new_anomaly_class")
-        metrics.record_new_class()
+        metrics.record_new_class(class_name=prediction.class_name)
         metrics.record_cloud_upload()
 
         # Enqueue the frame image for cloud upload (retraining pipeline)

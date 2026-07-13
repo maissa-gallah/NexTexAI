@@ -38,6 +38,9 @@ class Metrics:
     # --- Anomaly-specific counters ---
     threshold_breaches: int = 0       # confidence > threshold && not defect-free
     new_anomaly_classes_discovered: int = 0
+    new_anomaly_frames_by_class: dict[str, int] = field(
+        default_factory=lambda: defaultdict(int)
+    )  # per-class frame count for newly discovered anomalies
 
     # --- WebSocket ---
     websocket_broadcasts: int = 0
@@ -73,8 +76,10 @@ class Metrics:
     def record_threshold_breach(self) -> None:
         self.threshold_breaches += 1
 
-    def record_new_class(self) -> None:
+    def record_new_class(self, class_name: str | None = None) -> None:
         self.new_anomaly_classes_discovered += 1
+        if class_name is not None:
+            self.new_anomaly_frames_by_class[class_name] += 1
 
     def record_websocket_broadcast(self) -> None:
         self.websocket_broadcasts += 1
@@ -111,6 +116,7 @@ class Metrics:
             "anomalies": {
                 "threshold_breaches": self.threshold_breaches,
                 "new_classes_discovered": self.new_anomaly_classes_discovered,
+                "new_classes_by_class": dict(self.new_anomaly_frames_by_class),
             },
             "websocket": {
                 "broadcasts": self.websocket_broadcasts,

@@ -666,3 +666,169 @@ body {
     padding: 4px 10px;
   }
 }
+
+/* ─── Cloud & System Health Panel ───────────────────────────────────── */
+
+.cloud-status-panel {
+  margin-top: 20px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.cloud-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(22, 33, 62, 0.4) 100%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cloud-status-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.cloud-status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 12px;
+  border-radius: 12px;
+}
+
+.cloud-status-badge.healthy {
+  background: rgba(76, 175, 80, 0.15);
+  color: #81c784;
+}
+
+.cloud-status-badge.degraded {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffd54f;
+}
+
+.cloud-status-badge.error {
+  background: rgba(244, 67, 54, 0.15);
+  color: #ef5350;
+}
+
+.cloud-status-loading {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.cloud-status-body {
+  padding: 12px 20px 16px;
+}
+
+.cloud-status-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+  margin-top: 14px;
+  margin-bottom: 6px;
+}
+
+.cloud-status-section-title:first-of-type {
+  margin-top: 0;
+}
+
+.cloud-status-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.cloud-status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.cloud-status-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.cloud-status-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'Courier New', monospace;
+}
+
+.cloud-status-value.highlight {
+  color: var(--primary);
+}
+
+.cloud-status-value.error {
+  color: var(--danger);
+}
+
+.cloud-status-bar-track {
+  grid-column: 1 / -1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.cloud-status-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #764ba2);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.cloud-status-error {
+  margin-top: 10px;
+  padding: 8px 14px;
+  background: rgba(244, 67, 54, 0.08);
+  border: 1px solid rgba(244, 67, 54, 0.15);
+  border-radius: 6px;
+  color: #ef5350;
+  font-size: 13px;
+}
+
+.cloud-status-anomaly-list {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.cloud-status-anomaly-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary);
+}
+
+.cloud-status-anomaly-class {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cloud-status-anomaly-count {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: var(--warning, #ffd54f);
+}

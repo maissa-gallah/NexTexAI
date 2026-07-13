@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import DashboardAlerts from './DashboardAlerts';
+import CloudStatus from './CloudStatus';
 
 // ─── Multipart stream parser helpers ───────────────────────────────────────
 
@@ -102,7 +103,6 @@ const App = () => {
   const [fps, setFps] = useState(0);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState(null);
-  const [showDebug, setShowDebug] = useState(false);
   const [streamUrl, setStreamUrl] = useState('http://localhost:8000/video_feed');
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInput, setUrlInput] = useState('http://localhost:8000/video_feed');
@@ -298,12 +298,6 @@ const App = () => {
               {isConnected ? 'Live' : error ? 'Error' : 'Offline'}
             </span>
           </div>
-          <button
-            className={`btn ${showDebug ? 'btn-active' : 'btn-secondary'}`}
-            onClick={() => setShowDebug(!showDebug)}
-          >
-            🛠️ Debug
-          </button>
         </div>
       </header>
 
@@ -334,8 +328,8 @@ const App = () => {
             )}
           </div>
         </div>
-        <h1> hello </h1>
         <DashboardAlerts />
+        <CloudStatus />
 
         {showUrlInput && (
           <div className="settings-panel">
@@ -440,52 +434,6 @@ const App = () => {
         {error && (
           <div className="error-message">
             ⚠️ {error}
-          </div>
-        )}
-
-        {showDebug && status && (
-          <div className="debug-panel">
-            <h3>Debug Information</h3>
-            <div className="debug-grid">
-              <div className="debug-item">
-                <span className="debug-label">Status:</span>
-                <span className="debug-value">{status.status}</span>
-              </div>
-              <div className="debug-item">
-                <span className="debug-label">Images Received:</span>
-                <span className="debug-value">{status.images_received}</span>
-              </div>
-              <div className="debug-item">
-                <span className="debug-label">Queue Size:</span>
-                <span className="debug-value">{status.queue_size}</span>
-              </div>
-              <div className="debug-item">
-                <span className="debug-label">Last Update:</span>
-                <span className="debug-value">{status.last_update || 'Never'}</span>
-              </div>
-              <div className="debug-item">
-                <span className="debug-label">Broker:</span>
-                <span className="debug-value">{status.broker}</span>
-              </div>
-              <div className="debug-item">
-                <span className="debug-label">Topic:</span>
-                <span className="debug-value">{status.topic}</span>
-              </div>
-              {status.error && (
-                <div className="debug-item full-width">
-                  <span className="debug-label">Error:</span>
-                  <span className="debug-value error">{status.error}</span>
-                </div>
-              )}
-              {prediction && (
-                <div className="debug-item full-width">
-                  <span className="debug-label">Latest Prediction:</span>
-                  <span className="debug-value">
-                    {prediction.class} ({(prediction.confidence * 100).toFixed(1)}%)
-                  </span>
-                </div>
-              )}
-            </div>
           </div>
         )}
       </main>
