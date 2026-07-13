@@ -21,7 +21,6 @@ const App = () => {
     refreshStream,
   } = useVideoStream();
 
-  const status = useSystemStatus();
 
   return (
     <div className="app">
@@ -43,9 +42,6 @@ const App = () => {
           <div className="stats">
             <span>📊 Frames: {imageCount}</span>
             <span>⚡ FPS: {fps}</span>
-            {status && (
-              <span>📦 Queue: {status.queue_size || 0}</span>
-            )}
           </div>
         </div>
 
