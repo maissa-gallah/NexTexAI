@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FaExclamationTriangle, FaChevronDown } from 'react-icons/fa';
 import './DashboardAlerts.css';
 
 export default function DashboardAlerts() {
@@ -24,10 +25,10 @@ export default function DashboardAlerts() {
   return (
     <div className="alerts-panel">
       <div className="alerts-header" onClick={() => setCollapsed(!collapsed)} style={{ cursor: 'pointer' }}>
-        <h3>⚠️ System Alerts</h3>
+        <h3><FaExclamationTriangle style={{ marginRight: 6 }} /> System Alerts</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="alerts-count">{alerts.length}</span>
-          <span className={`alerts-toggle ${collapsed ? 'collapsed' : ''}`}>▼</span>
+          <span className={`alerts-toggle ${collapsed ? 'collapsed' : ''}`}><FaChevronDown /></span>
         </div>
       </div>
       {!collapsed && (
@@ -35,7 +36,7 @@ export default function DashboardAlerts() {
         {alerts.map((alert, index) => (
           <div key={index} className="alert-card">
             <div className="alert-header">
-              <span className="alert-icon">⚠️</span>
+              <span className="alert-icon"><FaExclamationTriangle /></span>
               <span className="alert-title">THRESHOLD EXCEEDED</span>
             </div>
             <div className="alert-body">

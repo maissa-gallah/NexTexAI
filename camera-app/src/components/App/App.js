@@ -1,6 +1,6 @@
 import React from 'react';
+import { FaPause, FaPlay, FaSyncAlt, FaChartBar, FaBolt, FaExclamationTriangle, FaCopyright } from 'react-icons/fa';
 import { useVideoStream } from '../../hooks/useVideoStream';
-import { useSystemStatus } from '../../hooks/useSystemStatus';
 import Header from '../Header/Header';
 import CameraFeed from '../CameraFeed/CameraFeed';
 import DashboardAlerts from '../DashboardAlerts/DashboardAlerts';
@@ -33,15 +33,15 @@ const App = () => {
               className={`btn ${isStreaming ? 'btn-danger' : 'btn-success'}`}
               onClick={toggleStream}
             >
-              {isStreaming ? '⏸️ Pause' : '▶️ Resume'}
+              {isStreaming ? <><FaPause /> Pause</> : <><FaPlay /> Resume</>}
             </button>
             <button className="btn btn-primary" onClick={refreshStream}>
-              🔄 Refresh
+              <FaSyncAlt /> Refresh
             </button>
           </div>
           <div className="stats">
-            <span>📊 Frames: {imageCount}</span>
-            <span>⚡ FPS: {fps}</span>
+            <span><FaChartBar style={{ marginRight: 4 }} /> Frames: {imageCount}</span>
+            <span><FaBolt style={{ marginRight: 4 }} /> FPS: {fps}</span>
           </div>
         </div>
         <DashboardAlerts />
@@ -59,7 +59,7 @@ const App = () => {
 
             {error && (
               <div className="error-message">
-                ⚠️ {error}
+                <FaExclamationTriangle style={{ marginRight: 6 }} /> {error}
               </div>
             )}
           </div>
@@ -72,7 +72,7 @@ const App = () => {
       <footer className="footer">
         <span>Powered by NexTex AI</span>
         <span>Stream: {streamUrl}</span>
-        <span>© {new Date().getFullYear()}</span>
+        <span><FaCopyright style={{ marginRight: 4 }} /> {new Date().getFullYear()}</span>
       </footer>
     </div>
   );

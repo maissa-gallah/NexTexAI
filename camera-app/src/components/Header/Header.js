@@ -1,4 +1,5 @@
 import React from 'react';
+import { FaVideo } from 'react-icons/fa';
 import './Header.css';
 
 export default function Header({ isConnected, error }) {
@@ -6,7 +7,7 @@ export default function Header({ isConnected, error }) {
 
   return (
     <header className="header">
-      <h1>📹 Live Camera Feed</h1>
+      <h1><FaVideo style={{ marginRight: 8 }} /> Live Camera Feed</h1>
       <div className="header-controls">
         <div className="status-indicator">
           <span className={`status-dot ${isConnected ? 'connected' : 'disconnected'}`} />

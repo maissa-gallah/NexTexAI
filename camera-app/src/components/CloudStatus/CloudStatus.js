@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { FaCloud, FaChevronDown, FaCircle, FaExclamationTriangle, FaEnvelope, FaStar } from 'react-icons/fa';
 import { STATUS_API_URL, METRICS_API_URL } from '../../utils/constants';
 import './CloudStatus.css';
 
@@ -34,7 +35,7 @@ export default function CloudStatus() {
     return (
       <div className="cloud-status-panel">
         <div className="cloud-status-header">
-          <h3>☁️ Cloud & System Health</h3>
+          <h3><FaCloud style={{ marginRight: 6 }} /> Cloud & System Health</h3>
         </div>
         <div className="cloud-status-loading">Loading status...</div>
       </div>
@@ -67,12 +68,12 @@ export default function CloudStatus() {
   return (
     <div className="cloud-status-panel">
       <div className="cloud-status-header" onClick={() => setCollapsed(!collapsed)} style={{ cursor: 'pointer' }}>
-        <h3>☁️ Cloud & System Health</h3>
+        <h3><FaCloud style={{ marginRight: 6 }} /> Cloud & System Health</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className={`cloud-status-badge ${overallHealth}`}>
-            {overallHealth === 'healthy' ? '🟢 Healthy' : overallHealth === 'degraded' ? '🟡 Degraded' : '🔴 Error'}
+            {overallHealth === 'healthy' ? <><FaCircle style={{ color: '#81c784', fontSize: 12 }} /> Healthy</> : overallHealth === 'degraded' ? <><FaCircle style={{ color: '#ffd54f', fontSize: 12 }} /> Degraded</> : <><FaCircle style={{ color: '#ef5350', fontSize: 12 }} /> Error</>}
           </span>
-          <span className={`cloud-status-toggle ${collapsed ? 'collapsed' : ''}`}>▼</span>
+          <span className={`cloud-status-toggle ${collapsed ? 'collapsed' : ''}`}><FaChevronDown /></span>
         </div>
       </div>
 
@@ -95,7 +96,7 @@ export default function CloudStatus() {
         </div>
 
         {/* ── Cloud / MinIO ── */}
-        <div className="cloud-status-section-title">☁️ Cloud Storage (MinIO)</div>
+        <div className="cloud-status-section-title"><FaCloud style={{ marginRight: 6 }} /> Cloud Storage (MinIO)</div>
         <div className="cloud-status-section">
           <div className="cloud-status-item">
             <span className="cloud-status-label">Uploads Enqueued</span>
@@ -114,7 +115,7 @@ export default function CloudStatus() {
         </div>
 
         {/* ── Messaging ── */}
-        <div className="cloud-status-section-title">📨 Messaging</div>
+        <div className="cloud-status-section-title"><FaEnvelope style={{ marginRight: 6 }} /> Messaging</div>
         <div className="cloud-status-section">
           <div className="cloud-status-item">
             <span className="cloud-status-label">Active WebSockets</span>
@@ -129,11 +130,11 @@ export default function CloudStatus() {
         {/* ── New Anomaly Classes ── */}
         {newAnomalyClasses.length > 0 && (
           <>
-            <div className="cloud-status-section-title">🆕 New Anomaly Classes</div>
+            <div className="cloud-status-section-title"><FaStar style={{ marginRight: 6 }} /> New Anomaly Classes</div>
             <div className="cloud-status-section">
               <div className="cloud-status-item">
                 <span className="cloud-status-label">Total New Classes</span>
-                <span className="cloud-status-value">{newClassesDiscovered}</span>
+                <span className="cloud-status-value">{newAnomalyClasses.length}</span>
               </div>
               <div className="cloud-status-anomaly-list">
                 {newAnomalyClasses.map(([cls, count]) => (
@@ -148,7 +149,7 @@ export default function CloudStatus() {
         )}
 
         {/* ── Errors ── */}
-        <div className="cloud-status-section-title">⚠️ Errors</div>
+        <div className="cloud-status-section-title"><FaExclamationTriangle style={{ marginRight: 6 }} /> Errors</div>
         <div className="cloud-status-section">
           <div className="cloud-status-item">
             <span className="cloud-status-label">Processing Errors</span>
@@ -160,7 +161,7 @@ export default function CloudStatus() {
 
         {error && (
           <div className="cloud-status-error">
-            ⚠️ {error}
+            <FaExclamationTriangle style={{ marginRight: 6 }} /> {error}
           </div>
         )}
       </div>}

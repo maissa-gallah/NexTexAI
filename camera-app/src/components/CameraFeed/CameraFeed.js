@@ -1,4 +1,5 @@
 import React from 'react';
+import { FaPause, FaCircle } from 'react-icons/fa';
 import './CameraFeed.css';
 
 export default function CameraFeed({
@@ -24,7 +25,7 @@ export default function CameraFeed({
       <div className="feed-container">
         {!isStreaming && (
           <div className="paused-overlay">
-            <div className="pause-icon">⏸️</div>
+            <div className="pause-icon"><FaPause /></div>
             <h2>Stream Paused</h2>
             <p>Click "Resume" to continue the feed</p>
           </div>
@@ -48,7 +49,7 @@ export default function CameraFeed({
         {/* Quality badge remains pinned inside the frame overlay */}
         {isConnected && isStreaming && (
           <div className={`quality-badge ${fps > 15 ? 'good' : fps > 5 ? 'medium' : 'poor'}`}>
-            {fps > 15 ? '🟢 Excellent' : fps > 5 ? '🟡 Good' : '🔴 Poor'}
+            {fps > 15 ? <><FaCircle style={{ color: '#4caf50', fontSize: 12 }} /> Excellent</> : fps > 5 ? <><FaCircle style={{ color: '#ffd54f', fontSize: 12 }} /> Good</> : <><FaCircle style={{ color: '#ef5350', fontSize: 12 }} /> Poor</>}
           </div>
         )}
       </div>
