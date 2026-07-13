@@ -65,7 +65,7 @@ const App = () => {
       </main>
 
       <footer className="footer">
-        <span>Powered by MQTT & FastAPI</span>
+        <span>Powered by NexTex AI</span>
         <span>Stream: {streamUrl}</span>
         <span>© {new Date().getFullYear()}</span>
       </footer>

@@ -53,7 +53,6 @@ export default function CloudStatus() {
 
   const trackedClasses = health?.tracked_anomaly_classes?.length ?? 0;
   const imagesIngested = health?.images_ingested ?? 0;
-  const latestPred = health?.latest_prediction;
   const newAnomalyClasses = metrics?.anomalies?.new_classes_by_class
     ? Object.entries(metrics.anomalies.new_classes_by_class)
     : [];
@@ -126,25 +125,6 @@ export default function CloudStatus() {
             <span className="cloud-status-value">{wsBroadcasts}</span>
           </div>
         </div>
-
-        {/* ── Latest Prediction ── */}
-        {latestPred && (
-          <>
-            <div className="cloud-status-section-title">📊 Latest Prediction</div>
-            <div className="cloud-status-section">
-              <div className="cloud-status-item">
-                <span className="cloud-status-label">Class</span>
-                <span className="cloud-status-value highlight">{latestPred.class}</span>
-              </div>
-              <div className="cloud-status-item">
-                <span className="cloud-status-label">Confidence</span>
-                <span className="cloud-status-value">
-                  {(latestPred.confidence * 100).toFixed(1)}%
-                </span>
-              </div>
-            </div>
-          </>
-        )}
 
         {/* ── New Anomaly Classes ── */}
         {newAnomalyClasses.length > 0 && (
