@@ -23,7 +23,7 @@ ALERT_EXCHANGE = "anomaly_alerts"
 CONFIDENCE_THRESHOLD = 0.90
 
 # --- State Tracking & Async Streaming Queues ---
-SEEN_CLASSES = set(["defect free"])
+SEEN_CLASSES = set(["Broken stitch", "defect free", "hole", "horizontal"])
 latest_prediction = None
 image_counter = 0
 
