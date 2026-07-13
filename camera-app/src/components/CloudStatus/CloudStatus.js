@@ -57,7 +57,7 @@ export default function CloudStatus() {
   const newAnomalyClasses = metrics?.anomalies?.new_classes_by_class
     ? Object.entries(metrics.anomalies.new_classes_by_class)
     : [];
-  const newClassesDiscovered = metrics?.anomalies?.new_classes_discovered ?? 0;
+  const newClassesDiscoveredImages = metrics?.anomalies?.new_classes_discovered ?? 0;
 
   const overallHealth = error
     ? 'error'
@@ -133,8 +133,8 @@ export default function CloudStatus() {
             <div className="cloud-status-section-title"><FaStar style={{ marginRight: 6 }} /> New Anomaly Classes</div>
             <div className="cloud-status-section">
               <div className="cloud-status-item">
-                <span className="cloud-status-label">Total New Classes</span>
-                <span className="cloud-status-value">{newAnomalyClasses.length}</span>
+                <span className="cloud-status-value">Total New Classes: {newAnomalyClasses.length}</span>
+                <span className="cloud-status-label">{newClassesDiscoveredImages} Frames</span>
               </div>
               <div className="cloud-status-anomaly-list">
                 {newAnomalyClasses.map(([cls, count]) => (
