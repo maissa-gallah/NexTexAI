@@ -22,6 +22,10 @@ ALERT_EXCHANGE = "anomaly_alerts"
 
 CONFIDENCE_THRESHOLD = 0.90
 
+# --- Cloud Upload Configuration (MinIO / S3-compatible) ---
+
+CLOUD_UPLOAD_QUEUE = "cloud_upload_queue"
+
 # --- State Tracking & Async Streaming Queues ---
 SEEN_CLASSES = set(["Broken stitch", "defect free", "hole", "horizontal"])
 latest_prediction = None
@@ -75,14 +79,48 @@ def simulate_prediction() -> dict:
     confidence = round(random.uniform(0.75, 0.99), 3)
     return {"class": defect_class, "confidence": confidence}
 
-def evaluate_and_alert_rabbitmq(prediction: dict, frame_number: int):
+def evaluate_and_alert_rabbitmq(prediction: dict, frame_number: int, image_bytes: bytes = None):
     try:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
         channel = connection.channel()
         channel.exchange_declare(exchange=ALERT_EXCHANGE, exchange_type='topic')
+        channel.queue_declare(queue=CLOUD_UPLOAD_QUEUE, durable=True)
         
         pred_class = prediction["class"]
         confidence = prediction["confidence"]
+
+        # --- EVENT 1: New Anomaly Class ---
+
+        if pred_class not in SEEN_CLASSES:
+            alert_payload = {"event_type": "new_anomaly_class", "details": prediction}
+            channel.basic_publish(
+                exchange=ALERT_EXCHANGE,
+                routing_key="anomaly.new_class",
+                body=json.dumps(alert_payload)
+            )
+            print(f" [RMQ ALERT] New Anomaly Class: {pred_class}")
+
+            # --- Upload the corresponding frame to cloud for retraining ---
+            if image_bytes is not None:
+                try:
+                    channel.basic_publish(
+                        exchange='',
+                        routing_key=CLOUD_UPLOAD_QUEUE,
+                        body=image_bytes,
+                        properties=pika.BasicProperties(
+                            delivery_mode=2,
+                            headers={
+                                "frame_number": str(frame_number),
+                                "class_name": pred_class,
+                                "confidence": str(confidence),
+                                "event_type": "new_anomaly_class"
+                            }
+                        )
+                    )
+                    print(f" [CLOUD QUEUE] Frame #{frame_number} enqueued for cloud upload (class: {pred_class})")
+                except Exception as upload_err:
+                    print(f"Failed to enqueue frame for cloud upload: {upload_err}")
+
 
         # --- EVENT 2: Threshold exceeded ---
         if pred_class != "defect free" and confidence > CONFIDENCE_THRESHOLD:
@@ -148,8 +186,8 @@ def on_message(client, userdata, msg):
     except Exception as e:
         print(f"Error buffering raw image into RabbitMQ: {e}")
 
-    # 3. Handle Alert Rules
-    evaluate_and_alert_rabbitmq(prediction, image_counter)
+    # 3. Handle Alert Rules (pass image bytes for cloud upload on new anomaly classes)
+    evaluate_and_alert_rabbitmq(prediction, image_counter, msg.payload)
 
 # --- Background Task Management ---
 
