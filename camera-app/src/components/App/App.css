@@ -12,6 +12,24 @@
   width: 100%;
 }
 
+.content-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.content-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.content-side {
+  flex: 0 0 360px;
+  min-width: 280px;
+  position: sticky;
+  top: 20px;
+}
+
 .controls-bar {
   display: flex;
   justify-content: space-between;
@@ -121,6 +139,18 @@
   border-top: 1px solid var(--border-color);
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+@media (max-width: 1024px) {
+  .content-layout {
+    flex-direction: column;
+  }
+
+  .content-side {
+    flex: 1 1 auto;
+    min-width: 0;
+    position: static;
+  }
 }
 
 @media (max-width: 768px) {

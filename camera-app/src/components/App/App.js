@@ -44,24 +44,29 @@ const App = () => {
             <span>⚡ FPS: {fps}</span>
           </div>
         </div>
-
         <DashboardAlerts />
-        <CloudStatus />
 
-        <CameraFeed
-          isConnected={isConnected}
-          isStreaming={isStreaming}
-          currentImageUrl={currentImageUrl}
-          imageCount={imageCount}
-          fps={fps}
-          prediction={prediction}
-        />
+        <div className="content-layout">
+          <div className="content-main">
+            <CameraFeed
+              isConnected={isConnected}
+              isStreaming={isStreaming}
+              currentImageUrl={currentImageUrl}
+              imageCount={imageCount}
+              fps={fps}
+              prediction={prediction}
+            />
 
-        {error && (
-          <div className="error-message">
-            ⚠️ {error}
+            {error && (
+              <div className="error-message">
+                ⚠️ {error}
+              </div>
+            )}
           </div>
-        )}
+          <aside className="content-side">
+            <CloudStatus />
+          </aside>
+        </div>
       </main>
 
       <footer className="footer">
