@@ -15,7 +15,7 @@ export function useSystemStatus() {
   }, []);
 
   useEffect(() => {
-    statusIntervalRef.current = setInterval(fetchStatus, 2000);
+    statusIntervalRef.current = setInterval(fetchStatus, 500);
     return () => {
       if (statusIntervalRef.current) clearInterval(statusIntervalRef.current);
     };
