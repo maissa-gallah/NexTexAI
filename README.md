@@ -1,4 +1,4 @@
-# NexTexAI
+# NexTexAI Technical Assessment
 
 Real-time fabric defect detection system. Images are streamed via MQTT, classified by a simulated AI backend, and displayed live in a React dashboard with anomaly alerts, metrics, and cloud uploads.
 
@@ -261,3 +261,36 @@ npx react-scripts test --watchAll=false   # Single run (CI-friendly)
 ```
 
 ---
+
+## Local Disk Storage vs MQTT
+
+### True Event-Driven Behavior
+MQTT uses a Publish/Subscribe model. The simulation script reads files from the data folder and publishes them at set intervals to a topic. Our consuming application subscribes to that topic and reacts instantly to incoming data, exactly like a production IoT or telemetry pipeline.
+
+### Architectural Decoupling
+The application processing the data doesn't need to know where the data folder is, or even that it's looking at simulated data. We can easily swap the simulation script for real live data later without changing your consumer code (no need to change our backend base code we just need to publish via the real data simulator into the queue and our backend consume it)
+
+### Conclusion
+MQTT is the clear winner for streaming simulations.
+It behaves exactly like a real production setup and makes it incredibly easy to connect everything without headaches later on.
+
+## RabbitMQ for ML inference pipeline
+
+RabbitMQ is used to decouple ML inference from downstream processing tasks such as anomaly storage, alerting, and retraining pipelines. It acts as a reliable buffer between producers and consumers, ensuring that slow or temporarily unavailable services do not impact the real-time image processing pipeline.
+
+## MQTT vs RabbitMQ
+
+### MQTT is excellent for:
+
+* IoT devices,
+* cameras,
+* sensors,
+* lightweight telemetry streams.
+
+### RabbitMQ is better for:
+
+* guaranteed delivery,
+* durable queues,
+* retries,
+* acknowledgements,
+* work distribution among multiple consumers.
