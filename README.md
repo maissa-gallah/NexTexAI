@@ -50,7 +50,7 @@ Real-time fabric defect detection system. Images are streamed via MQTT, classifi
 
 ## Data Flow (end-to-end)
 
-1. **`image_streamer.py`** reads JPEG images from `Dataset/` and publishes them via MQTT to the `simulation/images` topic.
+1. **`image_streamer.py`** reads images from `Dataset/` and publishes them via MQTT to the `simulation/images` topic.
 2. **`MqttHandler`** subscribes to that topic; on each message it calls `simulate_prediction()` — randomly assigning a defect class and confidence.
 3. **`StreamService`** receives the `FrameData` (image bytes + prediction) and buffers it in an async queue.
 4. **`generate_mjpeg()`** consumes the queue and produces a multipart/x-mixed-replace stream: each frame is preceded by JSON metadata (the prediction) and followed by the raw JPEG.
@@ -60,12 +60,28 @@ Real-time fabric defect detection system. Images are streamed via MQTT, classifi
 
 ---
 
+## Dataset
+
+This project uses the **[Multi-Class Fabric Defect Detection Dataset](https://www.kaggle.com/datasets/ziya07/multi-class-fabric-defect-detection-dataset)** by Ziya (CC0: Public Domain).
+
+
+### Sequential Streaming Approach
+
+The dataset is used as a **sequential unlabeled stream** to simulate a real-time camera feed:
+
+1. **`image_streamer.py`** reads images from a single folder (default `Dataset/Broken stitch`) and publishes them one by one over MQTT, mimicking frames coming off a production line.
+2. **No labels are attached at the source** — the streamer simply sends raw JPEG bytes.
+3. **The backend subscribes to the MQTT topic and *simulates* the prediction step**: it randomly assigns a defect class and confidence score to each incoming frame.
+
+---
+
 ## Running the Project
 
 ### Prerequisites
 
 - Docker & Docker Compose (recommended)
 - Python 3.11+ (for local development)
+- Dataset extracted to the `Dataset/` folder (see dataset setup below) 
 
 ### Quick Start (Docker Compose)
 
@@ -73,7 +89,10 @@ Real-time fabric defect detection system. Images are streamed via MQTT, classifi
 # 1. Clone and enter the project
 cd NexTexAI
 
-# 2. Start all services
+# 2. Extract the dataset zip into the Dataset/ folder
+#    (e.g., unzip dataset.zip -d Dataset/ — adjust the filename to your downloaded archive)
+
+# 3. Start all services
 docker compose up --build
 ```
 
@@ -90,6 +109,12 @@ This starts:
 | **Uploader**      | `nextexai_uploader` | —              | RabbitMQ → MinIO anomaly uploader    |
 
 Once running, open **[http://localhost:3000](http://localhost:3000)** in your browser.
+
+> **📦 Dataset setup:** Before running the streamer, make sure the dataset archive is extracted into the `Dataset/` directory so that the subfolders (e.g. `Broken stitch/`, `hole/`, `stain/`) are directly inside it. Example:
+> ```bash
+> cd NexTexAI
+> unzip dataset.zip -d Dataset/
+> ```
 
 ### Running Locally (Development)
 
@@ -249,3 +274,24 @@ RabbitMQ is used to decouple ML inference from downstream processing tasks such 
 * retries,
 * acknowledgements,
 * work distribution among multiple consumers.
+
+---
+
+## Production Considerations
+
+The following analysis covers critical areas to address before deploying this architecture to a production environment. Each section identifies current gaps and recommended mitigations.
+
+### 🔒 Security
+
+| Concern | Current State | Production Requirement |
+|---------|---------------|-----------------------|
+| **MQTT authentication** | `allow_anonymous true` — no auth at all | Enable username/password or certificate-based authentication. Disable anonymous access. |
+| **API authentication** | All endpoints are wide open — no auth on `/video_feed`, `/status`, `/metrics`, `/ws/alerts` | Add JWT, OAuth2, or API-key authentication. The frontend should authenticate before accessing streams or WebSockets. |
+| **CORS policy** | `allow_origins=["http://localhost:3000"]` with `allow_methods=["*"]` and `allow_headers=["*"]` | Lock to actual production domain(s). Restrict methods and headers to the minimum required set. |
+| **Hardcoded credentials** | `minioadmin/minioadmin` and RabbitMQ `guest/guest` exposed in `docker-compose.yml` | Use a secrets manager (Vault, AWS Secrets Manager, Kubernetes Secrets). Never commit secrets — use `.env` files excluded from version control. |
+
+### 📊 Observability
+
+| Concern | Current State | Production Need |
+|---------|---------------|-----------------|
+| **Logging** | `print()` statements throughout | Structured JSON logging (structlog, python-json-logger) with proper log levels (DEBUG, INFO, WARNING, ERROR). |
