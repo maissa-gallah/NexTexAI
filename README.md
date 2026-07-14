@@ -48,68 +48,6 @@ Real-time fabric defect detection system. Images are streamed via MQTT, classifi
 
 ---
 
-## Project Structure
-
-```
-├── docker-compose.yml              # Orchestrates all services
-├── pyproject.toml                  # Python project config (ruff, pytest)
-│
-├── backend/                        # FastAPI backend
-│   ├── app.py                      # Entry point, lifecycle, callback wiring
-│   ├── config.py                   # Centralised env-based configuration
-│   ├── models.py                   # Data models (Prediction, FrameData, AlertPayload)
-│   ├── connection_manager.py       # WebSocket connection manager
-│   ├── requirements.txt            # Python dependencies
-│   ├── Dockerfile                  # Container build
-│   ├── routers/
-│   │   ├── video.py                # GET /video_feed — MJPEG stream
-│   │   ├── alerts.py               # WS /ws/alerts — real-time anomaly alerts
-│   │   └── status.py               # GET /health, /status, /metrics
-│   ├── services/
-│   │   ├── mqtt_handler.py         # MQTT client lifecycle & message ingestion
-│   │   ├── stream_service.py       # Async queue → MJPEG generator
-│   │   ├── alert_engine.py         # Prediction evaluation → RabbitMQ alerts
-│   │   └── metrics.py              # Real-time operational metrics singleton
-│   └── tests/
-│       └── test_models.py
-│
-├── camera-app/                     # React frontend
-│   ├── Dockerfile                  # nginx-based production build
-│   ├── nginx.conf                  # Reverse proxy to backend
-│   ├── package.json
-│   └── src/
-│       ├── components/
-│       │   ├── App/                # Root layout
-│       │   ├── CameraFeed/         # MJPEG stream player
-│       │   ├── PredictionOverlay/  # Prediction labels overlaid on video
-│       │   ├── DashboardAlerts/    # WebSocket-powered alert feed
-│       │   ├── CloudStatus/        # System health & metrics display
-│       │   └── Header/             # Top navigation bar
-│       └── hooks/
-│           ├── useVideoStream.js   # MJPEG stream consumption hook
-│           └── useSystemStatus.js  # Status/metrics polling hook
-│
-├── scripts/                        # Standalone utility scripts
-│   ├── image_streamer.py           # MQTT publisher (folder → topic)
-│   ├── image_receiver.py           # MQTT subscriber (topic → disk)
-│   ├── cloud_uploader.py           # RabbitMQ consumer → MinIO uploads
-│   ├── Dockerfile
-│   └── requirements.txt
-│
-└── Dataset/                        # Sample fabric defect images
-    ├── Broken stitch/
-    ├── defect free/
-    ├── hole/
-    ├── horizontal/
-    ├── lines/
-    ├── Needle mark/
-    ├── Pinched fabric/
-    ├── stain/
-    └── Vertical/
-```
-
----
-
 ## Data Flow (end-to-end)
 
 1. **`image_streamer.py`** reads JPEG images from `Dataset/` and publishes them via MQTT to the `simulation/images` topic.
@@ -229,7 +167,24 @@ All configuration is loaded from environment variables with sensible defaults.
 
 ---
 
+## Continuous Integration
+
+This project uses **GitHub Actions** to automatically lint and test every push to `main` and every pull request. The pipeline is defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) and consists of four parallel jobs:
+
+| Job              | What it runs                      | Triggers                   |
+|------------------|-----------------------------------|----------------------------|
+| `python-lint`    | `ruff check .` on `backend/` & `scripts/` | Push to `main` / PR |
+| `python-test`    | `pytest` on `backend/` & `scripts/`       | Push to `main` / PR |
+| `frontend-lint`  | `eslint src/` on `camera-app/`            | Push to `main` / PR |
+| `frontend-test`  | `react-scripts test` on `camera-app/`     | Push to `main` / PR |
+
+A **passing CI check** is required before merging any pull request, ensuring code quality and preventing regressions.
+
+---
+
 ## Linting & Tests
+
+Run the same checks locally before pushing:
 
 ### Backend
 
