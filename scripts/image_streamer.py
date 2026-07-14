@@ -18,7 +18,7 @@ BROKER_HOST = os.getenv("BROKER_HOST", "localhost")
 BROKER_PORT = int(os.getenv("BROKER_PORT", "1883"))
 TOPIC = os.getenv("TOPIC", "simulation/images")
 IMAGE_FOLDER = os.getenv("IMAGE_FOLDER", "../Dataset/Broken stitch")
-DELAY_SECONDS = float(os.getenv("DELAY_SECONDS", "1"))
+DELAY_SECONDS = float(os.getenv("DELAY_SECONDS", "0.066"))
 
 
 def stream_images():

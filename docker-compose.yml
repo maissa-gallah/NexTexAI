@@ -13,6 +13,7 @@ services:
         echo "allow_anonymous true" >> /mosquitto/config/mosquitto.conf
         exec mosquitto -c /mosquitto/config/mosquitto.conf
     restart: unless-stopped
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -22,6 +23,8 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
+    restart: unless-stopped
+
   minio:
     image: minio/minio:latest
     container_name: minio
@@ -34,6 +37,76 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Backend — FastAPI application
+  # ------------------------------------------------------------------
+  backend:
+    build: ./backend
+    container_name: nextexai_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - BROKER_HOST=mqtt
+      - BROKER_PORT=1883
+      - TOPIC=simulation/images
+      - RABBITMQ_HOST=rabbitmq
+      - CLOUD_ENDPOINT=minio:9000
+    depends_on:
+      mqtt:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # Frontend — React app served by nginx
+  # ------------------------------------------------------------------
+  frontend:
+    build: ./camera-app
+    container_name: nextexai_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # image_streamer — MQTT publisher that streams images from a folder
+  # ------------------------------------------------------------------
+  image_streamer:
+    build: ./scripts
+    container_name: nextexai_streamer
+    command: python image_streamer.py
+    environment:
+      - BROKER_HOST=mqtt
+      - BROKER_PORT=1883
+      - TOPIC=simulation/images
+      - IMAGE_FOLDER=/dataset/Broken stitch
+      - DELAY_SECONDS=0.066
+    volumes:
+      - ./Dataset:/dataset
+    depends_on:
+      - mqtt
+    restart: unless-stopped
+
+  # ------------------------------------------------------------------
+  # cloud_uploader — RabbitMQ worker that uploads anomaly frames to MinIO
+  # ------------------------------------------------------------------
+  cloud_uploader:
+    build: ./scripts
+    container_name: nextexai_uploader
+    command: python cloud_uploader.py
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - CLOUD_ENDPOINT=minio:9000
+      - CLOUD_ACCESS_KEY=minioadmin
+      - CLOUD_SECRET_KEY=minioadmin
+      - CLOUD_BUCKET=retraining-data
+    depends_on:
+      - rabbitmq
+      - minio
     restart: unless-stopped
 
 volumes:
