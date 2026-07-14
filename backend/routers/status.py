@@ -3,13 +3,12 @@ Status Router
 -------------
 Health-check / status + metrics endpoints for monitoring and dashboard display.
 """
-from fastapi import APIRouter
-
 from config import config
+from connection_manager import manager
+from fastapi import APIRouter
 from models import Prediction
 from services.metrics import metrics
 from services.stream_service import stream_service
-from connection_manager import manager
 
 router = APIRouter(tags=["status"])
 

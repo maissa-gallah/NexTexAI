@@ -8,7 +8,8 @@ for background processing / alert evaluation.
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import paho.mqtt.client as mqtt
 import pika
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
     from asyncio import AbstractEventLoop
 
 from config import config
-from models import Prediction, FrameData
+from models import FrameData, Prediction
 
 
 class MqttHandler:

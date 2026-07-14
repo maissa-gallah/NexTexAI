@@ -4,22 +4,21 @@ Application Entry Point
 Wires together the FastAPI application, middleware, routers, and
 background services (MQTT ingestion, alert engine, video streaming).
 """
-from __future__ import annotations
 
 import asyncio
 
+from config import config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from config import config
-from models import Prediction, FrameData
-from services.mqtt_handler import MqttHandler
-from services.alert_engine import AlertEngine
-from services.stream_service import stream_service
-from services.metrics import metrics
-from routers.video import router as video_router
+from models import FrameData, Prediction
 from routers.alerts import router as alerts_router
-from routers.status import router as status_router, set_status
+from routers.status import router as status_router
+from routers.status import set_status
+from routers.video import router as video_router
+from services.alert_engine import AlertEngine
+from services.metrics import metrics
+from services.mqtt_handler import MqttHandler
+from services.stream_service import stream_service
 
 # ---------------------------------------------------------------------------
 # FastAPI application

@@ -5,7 +5,6 @@ Exposes the live MJPEG video feed endpoint.
 """
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-
 from services.stream_service import stream_service
 
 router = APIRouter(tags=["video"])

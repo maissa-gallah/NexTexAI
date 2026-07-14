@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------------------
+# Project-wide Python configuration (ruff, pytest)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+# Rules: start with the default rule set
+lint.select = [
+    "F",   # pyflakes — detects logic errors
+    "E",   # pycodestyle — style errors
+    "W",   # pycodestyle — style warnings
+    "I",   # isort — import ordering
+    "N",   # pep8-naming — naming conventions
+    "UP",  # pyupgrade — modernise syntax
+    "B",   # flake8-bugbear — bug prone patterns
+]
+
+# Ignore specific rules we don't care about
+lint.ignore = [
+    "E501",  # line-too-long — we use formatter
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+asyncio_mode = "auto"

@@ -7,8 +7,8 @@ clients.
 """
 from __future__ import annotations
 
-import json
 import asyncio
+import json
 from typing import TYPE_CHECKING
 
 import pika
@@ -17,8 +17,9 @@ if TYPE_CHECKING:
     from asyncio import AbstractEventLoop
 
 from config import config
-from models import Prediction, AlertPayload, FrameData
 from connection_manager import manager
+from models import AlertPayload, FrameData, Prediction
+
 from services.metrics import metrics
 
 

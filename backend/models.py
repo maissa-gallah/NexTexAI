@@ -4,8 +4,8 @@ Data Models
 Simple typed data structures used throughout the application.
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional
+
+from dataclasses import dataclass
 
 
 @dataclass
@@ -27,7 +27,7 @@ class AlertPayload:
     """Payload published to RabbitMQ and broadcast via WebSocket."""
     event_type: str
     details: dict
-    frame: Optional[int] = None
+    frame: int | None = None
 
     def to_dict(self) -> dict:
         d: dict = {"event_type": self.event_type, "details": self.details}

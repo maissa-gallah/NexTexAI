@@ -3,9 +3,8 @@ Alerts Router
 -------------
 WebSocket endpoint for real-time anomaly alerts pushed to connected UIs.
 """
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-
 from connection_manager import manager
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 router = APIRouter(tags=["alerts"])
 
