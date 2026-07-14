@@ -90,11 +90,16 @@ The dataset is used as a **sequential unlabeled stream** to simulate a real-time
 cd NexTexAI
 
 # 2. Extract the dataset zip into the Dataset/ folder
-#    (e.g., unzip dataset.zip -d Dataset/ — adjust the filename to your downloaded archive)
+#    (e.g., unzip dataset.zip -d Dataset/)
 
 # 3. Start all services
-docker compose up --build
+docker compose up -d
+
+# 4. Shutdown all services (Once finished)
+docker compose down
+
 ```
+
 
 This starts:
 
@@ -110,7 +115,8 @@ This starts:
 
 Once running, open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-> **📦 Dataset setup:** Before running the streamer, make sure the dataset archive is extracted into the `Dataset/` directory so that the subfolders (e.g. `Broken stitch/`, `hole/`, `stain/`) are directly inside it. Example:
+
+> **📦 Dataset setup:** Before running the streamer, make sure the dataset archive is extracted into the `Dataset/` directory so that the subfolders (e.g. `Broken stitch/`) are directly inside it. Example:
 > ```bash
 > cd NexTexAI
 > unzip dataset.zip -d Dataset/
