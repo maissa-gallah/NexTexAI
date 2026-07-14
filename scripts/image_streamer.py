@@ -9,8 +9,9 @@ Usage:
 """
 import os
 import time
-from dotenv import load_dotenv
+
 import paho.mqtt.client as mqtt
+from dotenv import load_dotenv
 
 # --- CONFIGURATION ---
 load_dotenv()

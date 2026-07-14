@@ -10,9 +10,9 @@ Usage:
     python cloud_uploader.py
 """
 import os
-import json
-import pika
+
 import boto3
+import pika
 from botocore.config import Config
 from dotenv import load_dotenv
 
