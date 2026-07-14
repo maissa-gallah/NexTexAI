@@ -69,21 +69,25 @@ jobs:
       run:
         working-directory: backend
 
-    services:
-      mosquitto:
-        image: eclipse-mosquitto:2
-        ports:
-          - 1883:1883
-        options: >-
-          --entrypoint sh
-          -c
-          "echo 'listener 1883' > /mosquitto/config/mosquitto.conf
-           && echo 'allow_anonymous true' >> /mosquitto/config/mosquitto.conf
-           && exec mosquitto -c /mosquitto/config/mosquitto.conf"
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Start Mosquitto
+        run: |
+          cat > /tmp/mosquitto.conf << 'EOF'
+          listener 1883
+          allow_anonymous true
+          EOF
+          docker run -d --rm --name mosquitto \
+            -p 1883:1883 \
+            -v /tmp/mosquitto.conf:/mosquitto/config/mosquitto.conf \
+            eclipse-mosquitto:2
+          # Wait for Mosquitto to accept connections
+          for i in $(seq 1 10); do
+            nc -z localhost 1883 && break
+            sleep 1
+          done
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v5
